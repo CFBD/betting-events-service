@@ -6,7 +6,7 @@
 
     const schedule = require('node-schedule');
 
-    let job = schedule.scheduleJob("*/15 * * * *", book.syncLines);
+    let job = schedule.scheduleJob("*/5 * * * *", book.syncLines);
 })().catch(err => {
     console.error(err);
 });
