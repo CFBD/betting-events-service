@@ -1,4 +1,4 @@
-FROM node:10-alpine
+FROM node:18-alpine
 
 RUN mkdir -p /home/node/betting-events-service/node_modules && chown -R node:node /home/node/betting-events-service
 
@@ -12,6 +12,8 @@ RUN npm install
 COPY . .
 COPY --chown=node:node . .
 
+RUN npm run build
+
 USER node
 
-CMD [ "pm2-runtime", "index.js" ]
+CMD [ "pm2-runtime", "build/app.js" ]
