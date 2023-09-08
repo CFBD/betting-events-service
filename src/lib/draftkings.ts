@@ -60,7 +60,7 @@ export const useDraftKings = async (rabbit: RabbitInstance) => {
             previous: old
         }
 
-        if (old.line !== current.line) {
+        if (current.line !== null && old.line !== current.line) {
             await rabbit.publish("draftkings_outcome_line_changed", outcomeEvent);
         }
 
