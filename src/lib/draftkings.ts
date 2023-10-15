@@ -72,6 +72,14 @@ export const useDraftKings = async (rabbit: RabbitInstance) => {
     const syncDraftKingsLines = async () => {
         try {
             const newBook = await getLines();
+
+            if (newBook.errorStatus && newBook.errorStatus?.code === "BET419") {
+                book = {
+                    events: []
+                };
+                return;
+            }
+
             for (let event of newBook.events) {
                 const old = book.events.find(e => e.id === event.id);
 

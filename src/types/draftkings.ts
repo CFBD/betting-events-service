@@ -1,5 +1,8 @@
 export interface DraftKingsResponse {
     events: Competition[]
+    errorStatus?: {
+        code: string
+    }
 }
 
 export interface Competition {
