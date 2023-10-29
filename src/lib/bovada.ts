@@ -192,17 +192,19 @@ export const useBovada = async (rabbit: RabbitInstance) => {
         try {
             const newBook = await getLines();
 
-            for (let event of newBook.events) {
-                let old = book.events.find(e => e.id === event.id);
+            if (newBook?.events?.length ?? 0 > 0) {
+                for (let event of newBook.events) {
+                    let old = book.events?.find(e => e.id === event.id);
 
-                if (!old) {
-                    await publishEventCreated(event);
+                    if (!old) {
+                        await publishEventCreated(event);
+                    }
+
+                    await syncCompetition(old, event);
                 }
 
-                await syncCompetition(old, event);
+                book = newBook;
             }
-
-            book = newBook;
         }
         catch (err) {
             console.error(err);
