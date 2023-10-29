@@ -194,7 +194,7 @@ export const useBovada = async (rabbit: RabbitInstance) => {
 
             if (newBook?.events?.length ?? 0 > 0) {
                 for (let event of newBook.events) {
-                    let old = book.events?.find(e => e.id === event.id);
+                    let old = book?.events?.find(e => e.id === event.id);
 
                     if (!old) {
                         await publishEventCreated(event);
