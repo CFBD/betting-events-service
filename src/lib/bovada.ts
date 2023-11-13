@@ -5,6 +5,10 @@ import { BovadaResponse, Competition, DisplayGroup, Market, Outcome } from '../t
 const bovadaUrl = process.env.BOVADA_SPORT_URL;
 const getLines = async (): Promise<BovadaResponse> => {
     let response = await axios.get(`https://www.bovada.lv/services/sports/event/v2/events/A/description${bovadaUrl}`);
+    if (!response.data || response.data === '' || response.data.length === 0) {
+        response = response = await axios.get(`https://www.bovada.lv/services/sports/event/coupon/events/A/description${bovadaUrl}`);
+    }
+
     return response.data[0];
 };
 
