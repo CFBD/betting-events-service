@@ -3,7 +3,7 @@ import { RabbitInstance } from "./rabbit";
 import { DraftKingsResponse, Competition, Offer, Outcome } from "../types/draftkings";
 
 const getLines = async (): Promise<DraftKingsResponse> => {
-    const response = await axios.get("https://sportsbook-us-nh.draftkings.com/api/odds/v2/leagues/87637/offers/gamelines.json?main=true");
+    const response = await axios.get("https://sportsbook-nash.draftkings.com/api/odds/v2/leagues/87637/offers/gamelines.json?main=true");
     return response.data;
 }
 
