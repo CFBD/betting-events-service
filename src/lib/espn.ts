@@ -1,16 +1,22 @@
 import axios from "axios";
 import { RabbitInstance } from "./rabbit";
 import { EspnResponse, Evt } from "../types/espn";
+import { RedisInstance } from "./redis";
 
 const getLines = async (): Promise<EspnResponse> => {
     const response = await axios.get("https://www.espn.com/college-football/scoreboard?year=2024&_xhr=api&groups=80");
     return response.data;
 }
 
-export const useEspn = async (rabbit: RabbitInstance) => {
-
-    let book = await getLines();
-
+export const useEspn = async (rabbit: RabbitInstance, redis: RedisInstance) => {
+    let book: EspnResponse;
+    let bookString = await redis.get("espn_book");
+    if (bookString === null) {
+        book = await getLines();
+        await redis.set("espn_book", JSON.stringify(book));
+    } else {
+        book = JSON.parse(bookString);
+    }
 
     const publishEventCreated = async (event: Evt) => {
         if (event.odds && event.gameOdds && event.gameOdds.odds.length > 0 && event.gameOdds.providerName === 'ESPN BET') {
@@ -83,6 +89,7 @@ export const useEspn = async (rabbit: RabbitInstance) => {
                 }
 
                 book = newBook;
+                await redis.set("espn_book", JSON.stringify(book));
             }
         } catch (error) {
             console.error(error);

@@ -1,15 +1,23 @@
 import axios from "axios";
 import { RabbitInstance } from "./rabbit";
 import { DraftKingsResponse, Competition, Offer, Outcome } from "../types/draftkings";
+import { RedisInstance } from "./redis";
 
 const getLines = async (): Promise<DraftKingsResponse> => {
     const response = await axios.get("https://sportsbook-nash.draftkings.com/api/odds/v2/leagues/87637/offers/gamelines.json?main=true");
     return response.data;
 }
 
-export const useDraftKings = async (rabbit: RabbitInstance) => {
+export const useDraftKings = async (rabbit: RabbitInstance, redis: RedisInstance) => {
 
-    let book = await getLines();
+    let book: DraftKingsResponse;
+    let bookString = await redis.get("draftkings_book");
+    if (bookString === null) {
+        book = await getLines();
+        await redis.set("draftkings_book", JSON.stringify(book));
+    } else {
+        book = JSON.parse(bookString);
+    }
 
     const publishEventCreated = async (event: Competition) => {
         await rabbit.publish("draftkings_event_created", event);
@@ -91,6 +99,7 @@ export const useDraftKings = async (rabbit: RabbitInstance) => {
             }
 
             book = newBook;
+            await redis.set("draftkings_book", JSON.stringify(book));
         } catch (err) {
             console.error(err);
         }

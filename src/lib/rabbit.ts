@@ -11,7 +11,7 @@ export interface RabbitInstance {
 
 export const useRabbit = async (): Promise<RabbitInstance> => {
 
-    console.log(`amqp://${user}:${password}@${url}/${vHost}`);
+    // console.log(`amqp://${user}:${password}@${url}/${vHost}`);
     const connection = await connect(`amqp://${user}:${password}@${url}/${vHost}`);
     const channel = await connection.createChannel();
 

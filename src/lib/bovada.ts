@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { RabbitInstance } from './rabbit';
 import { BovadaResponse, Competition, DisplayGroup, Market, Outcome } from '../types/bovada';
+import { RedisInstance } from './redis';
 
 const bovadaUrl = process.env.BOVADA_SPORT_URL;
 const getLines = async (): Promise<BovadaResponse> => {
@@ -12,8 +13,15 @@ const getLines = async (): Promise<BovadaResponse> => {
     return response.data[0];
 };
 
-export const useBovada = async (rabbit: RabbitInstance) => {
-    let book = await getLines();
+export const useBovada = async (rabbit: RabbitInstance, redis: RedisInstance) => {
+    let book: BovadaResponse;
+    let bookString = await redis.get('bovada_book');
+    if (bookString === null) {
+        book = await getLines();
+        await redis.set('bovada_book', JSON.stringify(book));
+    } else {
+        book = JSON.parse(bookString);
+    }
 
     const publishEventCreated = async (event: Competition) => {
         const created = {
@@ -208,6 +216,7 @@ export const useBovada = async (rabbit: RabbitInstance) => {
                 }
 
                 book = newBook;
+                await redis.set('bovada_book', JSON.stringify(book));
             }
         }
         catch (err) {
