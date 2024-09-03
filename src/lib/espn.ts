@@ -3,17 +3,32 @@ import { RabbitInstance } from "./rabbit";
 import { EspnResponse, Evt } from "../types/espn";
 import { RedisInstance } from "./redis";
 
-const getLines = async (): Promise<EspnResponse> => {
-    const response = await axios.get("https://www.espn.com/college-football/scoreboard?year=2024&_xhr=api&groups=80");
-    return response.data;
+const getLines = async (): Promise<EspnResponse | null> => {
+    const date = new Date();
+    const response = await axios.get<EspnResponse>("https://www.espn.com/college-football/scoreboard?year=2024&_xhr=api&groups=80");
+
+    for (let seasonType of response.data.page.content.scoreboard.calendar) {
+        for (let week of seasonType.entries) {
+            const startDate = new Date(week.startDate);
+            const endDate = new Date(week.endDate);
+            if (date >= startDate && date <= endDate) {
+                const newResponse = await axios.get<EspnResponse>(`https://www.espn.com/college-football/scoreboard?year=2024&week=${week.value}&_xhr=api&groups=80`);
+                return newResponse.data;
+            }
+        }
+    }
+
+    return null;
 }
 
 export const useEspn = async (rabbit: RabbitInstance, redis: RedisInstance) => {
-    let book: EspnResponse;
+    let book: EspnResponse | null;
     let bookString = await redis.get("espn_book");
     if (bookString === null) {
         book = await getLines();
-        await redis.set("espn_book", JSON.stringify(book));
+        if (book) {
+            await redis.set("espn_book", JSON.stringify(book));
+        }
     } else {
         book = JSON.parse(bookString);
     }
@@ -77,7 +92,7 @@ export const useEspn = async (rabbit: RabbitInstance, redis: RedisInstance) => {
         try {
             const newBook = await getLines();
 
-            if (newBook.page.content.scoreboard.evts.length > 0) {
+            if (book && newBook && newBook.page.content.scoreboard.evts.length > 0) {
                 for (let event of newBook.page.content.scoreboard.evts) {
                     let oldEvent = book.page.content.scoreboard.evts.find(e => e.id === event.id) ?? null;
 
